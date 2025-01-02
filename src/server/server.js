@@ -1,6 +1,6 @@
 import express from 'express';
 import next from 'next';
-import open from 'open'; // Import the 'open' package
+import open from 'open';
 
 const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
@@ -14,14 +14,16 @@ app.prepare().then(() => {
     });
 
     const port = process.env.PORT || 3000;
-    const host = process.env.HOST || 'localhost'; // Default to 'localhost' if HOST is not defined
+    const host = process.env.HOST || 'localhost';
 
     server.listen(port, host, (err) => {
-        if (err) throw err;
+        if (err) {
+            console.error('Failed to start server:', err);
+            process.exit(1);
+        }
 
         console.log(`> Ready on http://${host}:${port}`);
 
-        // Automatically open the app in the default browser in production mode
         if (!dev) {
             open(`http://${host}:${port}`)
                 .then(() => console.log(`Browser opened at http://${host}:${port}`))
@@ -30,4 +32,7 @@ app.prepare().then(() => {
                 );
         }
     });
+}).catch((err) => {
+    console.error('Failed to prepare app:', err);
+    process.exit(1);
 });

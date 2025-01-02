@@ -6,6 +6,7 @@ import fs from 'fs';
 import * as sass from 'sass';
 import gulpSass from 'gulp-sass';
 import cleanCSS from 'gulp-clean-css';
+import nodemon from 'nodemon';
 const sassCompiler = gulpSass(sass);
 
 function loadEnv(envFile) {
@@ -30,14 +31,22 @@ export function watchSass() {
 }
 
 function devServer(cb) {
-    loadEnv('.env.dev');
-    exec('next dev', { env: process.env }, (err, stdout, stderr) => {
-        console.log(stdout);
-        console.error(stderr);
-        cb(err);
-    });
+  console.log('Starting dev server');
+  loadEnv('.env.dev');
+  nodemon({
+    script: 'src/server/server.js',
+    watch: ['src/server/*'],
+    env: { 'NODE_ENV': 'development' }
+  }).on('start', () => {
+    console.log('Nodemon started');
+    cb();
+  }).on('restart', (files) => {
+    console.log('Nodemon restarted due to changes in: ', files);
+  }).on('quit', () => {
+    console.log('Nodemon quit');
+    cb();
+  });
 }
-
 function build(cb) {
     loadEnv('.env.prod');
     exec('next build', (err, stdout, stderr) => {
@@ -58,8 +67,7 @@ function prodServer(cb) {
 
 export const runDev = gulp.series(
   compileSass,
-  watchSass,
-  devServer
+  gulp.parallel(watchSass, devServer)
 );
 
 export const runProd = gulp.series(
